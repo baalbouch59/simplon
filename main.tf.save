@@ -1,0 +1,47 @@
+variable "ssh_host" {}
+variable "ssh_user" {}
+variable "ssh_key" {}
+
+resource "null_resource" "ssh_target" {
+  connection {
+    type        = "ssh"
+    user        = var.ssh_user
+    host        = var.ssh_host
+    private_key = file(var.ssh_key)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt update && apt upgrade >/dev/null",
+      "sudo apt install -qq -y wget unzip apache2 php libapache2-mod-php mariadb-server php-mysqli php-mbstring php-curl php-gd php-simplexml php-intl php-ldap php-apcu php-xmlrpc php-cas php-zip php-bz2 php-ldap php-imap apcupsd php-apcu >/dev/null",
+      "wget https://github.com/PrestaShop/PrestaShop/releases/download/1.7.8.8/prestashop_1.7.8.8.zip",
+      "sudo systemctl restart apache2",
+      "sudo mkdir /var/www/html/prestashop",
+      "sudo unzip prestashop_1.7. -d /tmp/",
+      "sudo mv /tmp/prestashop.zip /var/www/html/",
+      "sudo unzip prestashop.zip -d /var/www/html/",
+      "sudo chown -R www-data:www-data /var/www/html/prestashop/",
+      "sudo mysql -e 'ALTER USER \"root\"@\"localhost\" IDENTIFIED BY \"Azerty1234\"'",
+      "sudo mysql -e 'FLUSH PRIVILEGES'",
+      "sudo mysql -u root -p'Azerty1234' -e 'CREATE DATABASE prestashop_db'",
+      "sudo mysql -u root -p'Azerty1234' -e 'CREATE USER \"shopuser\"@\"localhost\" IDENTIFIED BY \"eshop59\"'",
+      "sudo mysql -u root -p'Azerty1234' -e 'GRANT ALL PRIVILEGES ON prestashop_db.* TO \"shopuser\"@\"localhost\";'",
+      "sudo mysql -u root -p'Azerty1234' -e 'FLUSH PRIVILEGES;'",
+      "sudo mysql -u root -p'Azerty1234' -e 'exit;'",
+      "sudo systemctl restart mariadb"
+
+    ]
+  }
+}
+
+output "host" {
+value = var.ssh_host
+}
+output "user" {
+value = var.ssh_user
+}
+output "key" {
+value = var.ssh_key
+}
+
+
